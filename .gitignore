@@ -8,3 +8,12 @@ wheels/
 
 # Virtual environments
 .venv
+
+# SQLite files
+*.db
+
+# Environment files
+.env
+
+# Ruff-generated files
+.ruff_cache/
