@@ -8,6 +8,10 @@ class Settings(BaseSettings):
     jwt_expire_minutes: int = 10
     jwt_algorithm: str = "HS256"
 
+    admin_full_name: str = "Admin"
+    admin_email: str = "admin@example.com"
+    admin_password: str = "AdminPassword123!"
+
     database_url: str = "sqlite:///./ecommerce.db"
 
     model_config = SettingsConfigDict(env_file=".env")
