@@ -1,9 +1,10 @@
 from sqlmodel import Session, SQLModel, create_engine
 
 from app.config import settings
+from app.models.product import Product
 from app.models.user import User
 
-MODELS = [User]
+MODELS: list[type[SQLModel]] = [User, Product]
 
 engine = create_engine(
     settings.database_url, connect_args={"check_same_thread": False}, echo=True
