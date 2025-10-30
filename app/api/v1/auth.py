@@ -10,7 +10,9 @@ from app.schemas.user import Token, UserCreate, UserResponse
 router = APIRouter()
 
 
-@router.post("/register", response_model=UserResponse)
+@router.post(
+    "/register", status_code=status.HTTP_201_CREATED, response_model=UserResponse
+)
 def register(user_data: UserCreate, session: Session = Depends(get_session)):
     existing_user = session.exec(
         select(User).where(User.email == user_data.email)
