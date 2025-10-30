@@ -11,7 +11,7 @@ class UserRole(str, Enum):
 
 class User(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    full_name: str
+    full_name: str = Field(min_length=1, max_length=200)
     email: str = Field(unique=True, index=True)
     hashed_password: str
     role: UserRole = Field(default=UserRole.CUSTOMER)
