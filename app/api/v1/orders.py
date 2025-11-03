@@ -16,6 +16,42 @@ from app.schemas.product import ProductResponse
 router = APIRouter()
 
 
+def build_order_response(order: Order, session: Session) -> OrderResponse:
+    assert order.id is not None
+
+    order_items = session.exec(
+        select(OrderItem).where(OrderItem.order_id == order.id)
+    ).all()
+
+    items_response: list[OrderItemResponse] = []
+    for item in order_items:
+        assert item.id is not None
+
+        product = session.get(Product, item.product_id)
+        if not product:
+            continue
+
+        items_response.append(
+            OrderItemResponse(
+                id=item.id,
+                product=ProductResponse(**product.model_dump()),
+                quantity=item.quantity,
+                price_at_purchase=item.price_at_purchase,
+                subtotal=item.subtotal,
+            )
+        )
+
+    return OrderResponse(
+        id=order.id,
+        user_id=order.user_id,
+        items=items_response,
+        total_price=order.total_price,
+        status=order.status,
+        created_at=order.created_at,
+        updated_at=order.updated_at,
+    )
+
+
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=OrderResponse)
 def create_order(
     current_user: User = Depends(get_current_user),
@@ -53,12 +89,10 @@ def create_order(
 
     assert order.id is not None
 
-    items_response: list[OrderItemResponse] = []
     for item in cart_items:
         product = session.get(Product, item.product_id)
         if not product:
             continue
-
         assert product.id is not None
 
         subtotal = product.price * item.quantity
@@ -70,40 +104,17 @@ def create_order(
             price_at_purchase=product.price,
             subtotal=subtotal,
         )
-
         session.add(order_item)
 
         product.stock_quantity -= item.quantity
         session.add(product)
-
-        session.flush()
-
-        assert order_item.id is not None
-
-        items_response.append(
-            OrderItemResponse(
-                id=order_item.id,
-                product=ProductResponse(**product.model_dump()),
-                quantity=order_item.quantity,
-                price_at_purchase=order_item.price_at_purchase,
-                subtotal=order_item.subtotal,
-            )
-        )
 
     for item in cart_items:
         session.delete(item)
 
     session.commit()
 
-    return OrderResponse(
-        id=order.id,
-        user_id=current_user.id,
-        items=items_response,
-        total_price=order.total_price,
-        status=order.status,
-        created_at=order.created_at,
-        updated_at=order.updated_at,
-    )
+    return build_order_response(order, session)
 
 
 @router.get("/", response_model=list[OrderResponse])
@@ -111,49 +122,8 @@ def get_my_orders(
     current_user: User = Depends(get_current_user),
     session: Session = Depends(get_session),
 ):
-    assert current_user.id is not None
-
     orders = session.exec(select(Order).where(Order.user_id == current_user.id)).all()
-
-    orders_response: list[OrderResponse] = []
-    for order in orders:
-        assert order.id is not None
-
-        order_items = session.exec(
-            select(OrderItem).where(OrderItem.order_id == order.id)
-        ).all()
-
-        items_response: list[OrderItemResponse] = []
-        for item in order_items:
-            assert item.id is not None
-
-            product = session.get(Product, item.product_id)
-            if not product:
-                continue
-
-            items_response.append(
-                OrderItemResponse(
-                    id=item.id,
-                    product=ProductResponse(**product.model_dump()),
-                    quantity=item.quantity,
-                    price_at_purchase=item.price_at_purchase,
-                    subtotal=item.subtotal,
-                )
-            )
-
-        orders_response.append(
-            OrderResponse(
-                id=order.id,
-                user_id=current_user.id,
-                items=items_response,
-                total_price=order.total_price,
-                status=order.status,
-                created_at=order.created_at,
-                updated_at=order.updated_at,
-            )
-        )
-
-    return orders_response
+    return [build_order_response(order, session) for order in orders]
 
 
 @router.get("/all", response_model=list[OrderResponse])
@@ -166,55 +136,14 @@ def get_all_orders(
     session: Session = Depends(get_session),
 ):
     query = select(Order)
-
     if status:
         query = query.where(Order.status == status)
     if user_id:
         query = query.where(Order.user_id == user_id)
-
     query = query.order_by(Order.created_at.desc()).offset(skip).limit(limit)  # type: ignore
 
     orders = session.exec(query).all()
-
-    orders_response: list[OrderResponse] = []
-    for order in orders:
-        assert order.id is not None
-
-        order_items = session.exec(
-            select(OrderItem).where(OrderItem.order_id == order.id)
-        ).all()
-
-        items_response: list[OrderItemResponse] = []
-        for item in order_items:
-            assert item.id is not None
-
-            product = session.get(Product, item.product_id)
-            if not product:
-                continue
-
-            items_response.append(
-                OrderItemResponse(
-                    id=item.id,
-                    product=ProductResponse(**product.model_dump()),
-                    quantity=item.quantity,
-                    price_at_purchase=item.price_at_purchase,
-                    subtotal=item.subtotal,
-                )
-            )
-
-        orders_response.append(
-            OrderResponse(
-                id=order.id,
-                user_id=order.user_id,
-                items=items_response,
-                total_price=order.total_price,
-                status=order.status,
-                created_at=order.created_at,
-                updated_at=order.updated_at,
-            )
-        )
-
-    return orders_response
+    return [build_order_response(order, session) for order in orders]
 
 
 @router.get("/{order_id}", response_model=OrderResponse)
@@ -232,39 +161,8 @@ def get_order(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Order not found"
         )
-    assert order.id is not None
 
-    order_items = session.exec(
-        select(OrderItem).where(OrderItem.order_id == order.id)
-    ).all()
-
-    items_response: list[OrderItemResponse] = []
-    for item in order_items:
-        assert item.id is not None
-
-        product = session.get(Product, item.product_id)
-        if not product:
-            continue
-
-        items_response.append(
-            OrderItemResponse(
-                id=item.id,
-                product=ProductResponse(**product.model_dump()),
-                quantity=item.quantity,
-                price_at_purchase=item.price_at_purchase,
-                subtotal=item.subtotal,
-            )
-        )
-
-    return OrderResponse(
-        id=order.id,
-        user_id=current_user.id,
-        items=items_response,
-        total_price=order.total_price,
-        status=order.status,
-        created_at=order.created_at,
-        updated_at=order.updated_at,
-    )
+    return build_order_response(order, session)
 
 
 @router.patch("/{order_id}", response_model=OrderResponse)
@@ -279,41 +177,11 @@ def update_order_status(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Order not found"
         )
-    assert order.id is not None
 
     order.status = status_update.status
 
     session.add(order)
     session.commit()
+    session.refresh(order)
 
-    order_items = session.exec(
-        select(OrderItem).where(OrderItem.order_id == order.id)
-    ).all()
-
-    items_response: list[OrderItemResponse] = []
-    for item in order_items:
-        assert item.id is not None
-
-        product = session.get(Product, item.product_id)
-        if not product:
-            continue
-
-        items_response.append(
-            OrderItemResponse(
-                id=item.id,
-                product=ProductResponse(**product.model_dump()),
-                quantity=item.quantity,
-                price_at_purchase=item.price_at_purchase,
-                subtotal=item.subtotal,
-            )
-        )
-
-    return OrderResponse(
-        id=order.id,
-        user_id=order.user_id,
-        items=items_response,
-        total_price=order.total_price,
-        status=order.status,
-        created_at=order.created_at,
-        updated_at=order.updated_at,
-    )
+    return build_order_response(order, session)
