@@ -27,3 +27,8 @@ class OrderResponse(BaseModel):
 
 class OrderStatusUpdate(BaseModel):
     status: OrderStatus
+
+
+class CheckoutResponse(BaseModel):
+    session_id: str
+    checkout_url: str

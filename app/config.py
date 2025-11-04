@@ -12,6 +12,9 @@ class Settings(BaseSettings):
     admin_email: str = "admin@example.com"
     admin_password: str = "AdminPassword123!"
 
+    stripe_secret_key: str = "sk_test..."
+    stripe_webhook_secret: str | None = None
+
     database_url: str = "sqlite:///./ecommerce.db"
 
     model_config = SettingsConfigDict(env_file=".env")

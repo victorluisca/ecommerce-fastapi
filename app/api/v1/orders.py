@@ -10,8 +10,14 @@ from app.models.cart import CartItem
 from app.models.order import Order, OrderItem, OrderStatus
 from app.models.product import Product
 from app.models.user import User
-from app.schemas.order import OrderItemResponse, OrderResponse, OrderStatusUpdate
+from app.schemas.order import (
+    CheckoutResponse,
+    OrderItemResponse,
+    OrderResponse,
+    OrderStatusUpdate,
+)
 from app.schemas.product import ProductResponse
+from app.services.payment import create_checkout_session
 
 router = APIRouter()
 
@@ -185,3 +191,42 @@ def update_order_status(
     session.refresh(order)
 
     return build_order_response(order, session)
+
+
+@router.post("/{order_id}/checkout", response_model=CheckoutResponse)
+def create_order_checkout(
+    order_id: int,
+    current_user: User = Depends(get_current_user),
+    session: Session = Depends(get_session),
+):
+    order = session.exec(
+        select(Order).where(Order.id == order_id, Order.user_id == current_user.id)
+    ).first()
+    if not order:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Order not found"
+        )
+
+    if order.status != OrderStatus.PENDING:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Order is already {order.status}",
+        )
+
+    try:
+        checkout = create_checkout_session(
+            order_id=order_id,
+            amount=order.total_price,
+        )
+
+        order.stripe_checkout_session_id = checkout["id"]
+
+        session.add(order)
+        session.commit()
+
+        return CheckoutResponse(session_id=checkout["id"], checkout_url=checkout["url"])
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to create checkout: {str(e)}",
+        )

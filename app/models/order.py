@@ -17,6 +17,7 @@ class Order(SQLModel, table=True):
     user_id: int = Field(foreign_key="user.id", index=True)
     total_price: Decimal = Field(max_digits=10, decimal_places=2, gt=0)
     status: OrderStatus = Field(default=OrderStatus.PENDING)
+    stripe_checkout_session_id: str | None = Field(default=None, index=True)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
