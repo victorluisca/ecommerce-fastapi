@@ -9,7 +9,7 @@ A RESTful API for an e-commerce platform built with FastAPI and SQLModel. This i
 - [x] Product management
 - [x] Shopping cart
 - [x] Order processing with stock management
-- [ ] Payment gateway integration
+- [x] Payment gateway integration (Stripe Checkout)
 - [ ] Tests
 
 ## Tech Stack
@@ -39,7 +39,7 @@ This project uses [uv](https://docs.astral.sh/uv/) for dependency management.
 
 ```
 DATABASE_URL=sqlite:///./ecommerce.db
-JWT_SECRET_KEY=your-secret-eky
+JWT_SECRET_KEY=your-secret-key
 JWT_ALGORITHM=HS256
 JWT_EXPIRE_MINUTES=30
 ADMIN_EMAIL=admin@example.com
@@ -89,8 +89,13 @@ Once running, visit:
 - **POST** `/api/v1/orders` - Create order from cart
 - **GET** `/api/v1/orders` - List my orders
 - **GET** `/api/v1/orders/{id}` - Get order detail
+- **POST** `/api/v1/orders/{id}/checkout` Create order checkout
 - **GET** `/api/v1/orders/all` - List all orders (admin)
 - **PATCH** `/api/v1/orders/{id}` - Update order status (admin)
+
+### Webhooks
+
+- **POST** `/api/v1/webhooks/stripe` - Stripe Webhook
 
 ## Default Admin Account
 
