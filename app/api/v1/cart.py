@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from decimal import Decimal
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -121,6 +122,9 @@ def add_item_to_cart(
         )
         session.add(new_item)
 
+    cart.updated_at = datetime.now(timezone.utc)
+    session.add(cart)
+
     session.commit()
 
     return build_cart_response(cart, session)
@@ -151,6 +155,10 @@ def update_cart_item(
     cart_item.quantity = item_data.quantity
 
     session.add(cart_item)
+
+    cart.updated_at = datetime.now(timezone.utc)
+    session.add(cart)
+
     session.commit()
 
     return build_cart_response(cart, session)
@@ -173,6 +181,9 @@ def remove_cart_item(
 
     session.delete(cart_item)
 
+    cart.updated_at = datetime.now(timezone.utc)
+    session.add(cart)
+
     session.commit()
 
 
@@ -188,5 +199,8 @@ def clear_cart(
 
     for item in cart_items:
         session.delete(item)
+
+    cart.updated_at = datetime.now(timezone.utc)
+    session.add(cart)
 
     session.commit()

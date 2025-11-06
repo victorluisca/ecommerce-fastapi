@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from decimal import Decimal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -185,6 +186,7 @@ def update_order_status(
         )
 
     order.status = status_update.status
+    order.updated_at = datetime.now(timezone.utc)
 
     session.add(order)
     session.commit()
@@ -220,6 +222,7 @@ def create_order_checkout(
         )
 
         order.stripe_checkout_session_id = checkout["id"]
+        order.updated_at = datetime.now(timezone.utc)
 
         session.add(order)
         session.commit()

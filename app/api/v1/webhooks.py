@@ -1,4 +1,5 @@
 import json
+from datetime import datetime, timezone
 
 import stripe
 from fastapi import APIRouter, Depends, HTTPException, Request, status
@@ -46,6 +47,8 @@ async def stripe_webhook(
 
         if order:
             order.status = OrderStatus.PAID
+            order.updated_at = datetime.now(timezone.utc)
+
             db.add(order)
             db.commit()
 
