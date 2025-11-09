@@ -17,6 +17,7 @@ A RESTful API for an e-commerce platform built with FastAPI and SQLModel. This i
 - FastAPI
 - SQLModel (SQLAlchemy + Pydantic)
 - SQLite
+- Pytest
 
 ## Development
 
