@@ -10,7 +10,7 @@ A RESTful API for an e-commerce platform built with FastAPI and SQLModel. This i
 - [x] Shopping cart
 - [x] Order processing with stock management
 - [x] Payment gateway integration (Stripe Checkout)
-- [ ] Tests
+- [x] Tests
 
 ## Tech Stack
 
