@@ -16,7 +16,7 @@ A RESTful API for an e-commerce platform built with FastAPI and SQLModel. This i
 
 - FastAPI
 - SQLModel (SQLAlchemy + Pydantic)
-- SQLite
+- SQLite (for simplicity and local development)
 - Pytest
 
 ## Development
@@ -35,6 +35,13 @@ This project uses [uv](https://docs.astral.sh/uv/) for dependency management.
 3. Copy `.env.example` to `.env` and configure
 4. Create admin user: `uv run -m app.seed`
 5. Run: `fastapi dev`
+
+## Stripe Setup (Local Development)
+
+1. Install [Stripe CLI](https://docs.stripe.com/stripe-cli/install)
+2. Authenticate with `stripe login`
+3. Listen and forward events to the webhook `stripe listen --forward-to <weebhook-url>`
+4. Configure the `STRIPE_WEBHOOK_SECRET`
 
 ## Environment Variables
 
@@ -90,7 +97,7 @@ Once running, visit:
 - **POST** `/api/v1/orders` - Create order from cart
 - **GET** `/api/v1/orders` - List my orders
 - **GET** `/api/v1/orders/{id}` - Get order detail
-- **POST** `/api/v1/orders/{id}/checkout` Create order checkout
+- **POST** `/api/v1/orders/{id}/checkout` - Create order checkout
 - **GET** `/api/v1/orders/all` - List all orders (admin)
 - **PATCH** `/api/v1/orders/{id}` - Update order status (admin)
 
